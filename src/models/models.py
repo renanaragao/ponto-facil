@@ -1,11 +1,29 @@
 from datetime import datetime
+from itertools import groupby
 from enum import Enum
 
 
 class Usuario:
-    def __init__(self, email: str, valor_hora: float):
+    def __init__(self, email: str, valor_hora: float, acrescimos: dict):
         self.email = email
         self.valor_hora = valor_hora
+        self.acrescimos = acrescimos
+        self.total_acrescimos = 0
+
+        if acrescimos is not None:
+            self.total_acrescimos = sum(self.acrescimos.values())
+
+
+def retornar_datas(atividades):
+    for atividade in atividades:
+        yield atividade.data_final
+        yield atividade.data_inicial
+
+
+def calcular_total_dias(atividades):
+    datas = retornar_datas(atividades)
+    group = groupby(datas, key=lambda date: datetime(date.year, date.month, date.day))
+    return len(list(group))
 
 
 class FolhaDePonto:
@@ -34,7 +52,7 @@ class FolhaDePonto:
         atividade.finalizar()
         self.status = StatusFolha.ATIVIDADE_FINALIZADA
 
-        self.total_horas += (atividade.data_final - atividade.data_inicial).total_seconds() / 3600
+        self.total_horas += atividade.total_horas
         self.valor_total = self.total_horas * self._usuario.valor_hora
 
         return atividade
@@ -45,20 +63,30 @@ class FolhaDePonto:
     def __getitem__(self, item):
         return self._atividades[item]
 
+    def fechar(self):
+        self.status = StatusFolha.FECHADA
+
+        if self._usuario.acrescimos is not None:
+            total_dias_trabalhados = calcular_total_dias(self._atividades)
+            self.valor_total += self._usuario.total_acrescimos * total_dias_trabalhados
+
 
 class Atividade:
     def __init__(self):
         self.data_final = None
         self.data_inicial = datetime.now()
+        self.total_horas = 0
 
     def finalizar(self):
         self.data_final = datetime.now()
+        self.total_horas = (self.data_final - self.data_inicial).total_seconds() / 3600
 
 
 class StatusFolha(Enum):
     NOVA = 0
     ATIVIDADE_ATIVA = 1
     ATIVIDADE_FINALIZADA = 2
+    FECHADA = 3
 
 
 class FolhaDePontoError(Exception):
