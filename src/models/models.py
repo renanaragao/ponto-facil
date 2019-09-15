@@ -30,7 +30,7 @@ class FolhaDePonto:
         self.total_horas = 0
         self.data = datetime.now()
         self._usuario = usuario
-        self._atividades = [ ]
+        self._atividades = []
         self.status = StatusFolha.NOVA
 
     def iniciar_atividade(self):
@@ -46,7 +46,7 @@ class FolhaDePonto:
         if self.status is not StatusFolha.ATIVIDADE_ATIVA:
             raise FolhaDePontoError("Nenhuma atividade foi iniciada.")
 
-        atividade = self._atividades[ -1 ]
+        atividade = self._atividades[-1]
         atividade.finalizar()
         self.status = StatusFolha.ATIVIDADE_FINALIZADA
 
@@ -59,7 +59,7 @@ class FolhaDePonto:
         return len(self._atividades)
 
     def __getitem__(self, item):
-        return self._atividades[ item ]
+        return self._atividades[item]
 
     def fechar(self):
         self.status = StatusFolha.FECHADA
