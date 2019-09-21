@@ -14,13 +14,16 @@ class Usuario:
             self.total_acrescimos = sum(self.acrescimos.values())
 
 
+def retornar_datas(atividades):
+    for atividade in atividades:
+        yield atividade.data_inicial
+        yield atividade.data_final
+
+
 def calcular_total_dias(atividades):
-    datas = list(map(lambda x: x.data_inicial, atividades))
-
+    datas = list(retornar_datas(atividades))
     group_by_date = lambda date: datetime(date.year, date.month, date.day)
-
     group = groupby(sorted(datas, key=group_by_date), key=group_by_date)
-
     return len(list(group))
 
 

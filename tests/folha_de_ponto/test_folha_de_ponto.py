@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 
-from src.models.models import FolhaDePonto, StatusFolha, FolhaDePontoError, Usuario
+from src.folha_de_ponto.models import FolhaDePonto, StatusFolha, FolhaDePontoError, Usuario
 
 
 def criar_folha(acrescimos: dict=None):
@@ -74,7 +74,7 @@ class TestFolhaDePonto(unittest.TestCase):
         folha = criar_folha(acrescimos)
 
         atividade = folha.iniciar_atividade()
-        atividade.data_inicial = datetime.now() - timedelta(days=1)
+        atividade.data_inicial = datetime.now() - timedelta(hours=24)
         folha.finalizar_atividade()
 
         atividade = folha.iniciar_atividade()
