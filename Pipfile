@@ -4,9 +4,15 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pylint = "*"
+autopep8 = "*"
 
 [packages]
 flask = "*"
 flask-restful = "*"
 flask-jwt-extended = "*"
 bson = "*"
+pymongo = "*"
+mockupdb = "*"
+flask-pymongo = "*"
+testinstances = "*"

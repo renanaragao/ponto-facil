@@ -1,10 +1,16 @@
 from datetime import datetime
 from itertools import groupby
-from enum import Enum
+from enum import IntEnum
+
+from bson import ObjectId
+
+from src.base.base_model import Serializable
 
 
-class Usuario:
+class Usuario(Serializable):
     def __init__(self, email: str, valor_hora: float, acrescimos: dict):
+        super().__init__()
+        self._id = email
         self.email = email
         self.valor_hora = valor_hora
         self.acrescimos = acrescimos
@@ -27,21 +33,34 @@ def calcular_total_dias(atividades):
     return len(list(group))
 
 
-class FolhaDePonto:
-    def __init__(self, usuario: Usuario):
-        self.valor_total = 0
-        self.total_horas = 0
-        self.data = datetime.now()
-        self._usuario = usuario
-        self._atividades = []
-        self.status = StatusFolha.NOVA
+class FolhaDePonto(Serializable):
+    def __init__(self,
+                 usuario: Usuario,
+                 valor_total=0,
+                 total_horas=0,
+                 data=datetime.now(),
+                 atividades=None,
+                 status=None,
+                 _id=None,
+                 acrescimos=None,
+                 decrescimos=None):
+        super().__init__()
+        self.decrescimos = decrescimos or {}
+        self.acrescimos = acrescimos or {}
+        self._id = _id or ObjectId()
+        self.valor_total = valor_total
+        self.total_horas = total_horas
+        self.data = data
+        self.usuario = usuario
+        self.atividades = atividades or []
+        self.status = status or StatusFolha.NOVA
 
     def iniciar_atividade(self):
         if self.status is StatusFolha.ATIVIDADE_ATIVA:
             raise FolhaDePontoError("Existe uma atividade que não foi finalizada.")
 
         atividade = Atividade()
-        self._atividades.append(atividade)
+        self.atividades.append(atividade)
         self.status = StatusFolha.ATIVIDADE_ATIVA
         return atividade
 
@@ -49,41 +68,58 @@ class FolhaDePonto:
         if self.status is not StatusFolha.ATIVIDADE_ATIVA:
             raise FolhaDePontoError("Nenhuma atividade foi iniciada.")
 
-        atividade = self._atividades[-1]
+        atividade = self.atividades[-1]
         atividade.finalizar()
         self.status = StatusFolha.ATIVIDADE_FINALIZADA
 
         self.total_horas += atividade.total_horas
-        self.valor_total = self.total_horas * self._usuario.valor_hora
+        self.valor_total = self.total_horas * self.usuario.valor_hora
 
         return atividade
 
     def __len__(self):
-        return len(self._atividades)
+        return len(self.atividades)
 
     def __getitem__(self, item):
-        return self._atividades[item]
+        return self.atividades[item]
 
     def fechar(self):
         self.status = StatusFolha.FECHADA
 
-        if self._usuario.acrescimos is not None:
-            total_dias_trabalhados = calcular_total_dias(self._atividades)
-            self.valor_total += self._usuario.total_acrescimos * total_dias_trabalhados
+        if self.usuario.acrescimos is not None:
+            total_dias_trabalhados = calcular_total_dias(self.atividades)
+            self.valor_total += self.usuario.total_acrescimos * total_dias_trabalhados
+
+        if self.acrescimos is not None:
+            self.valor_total += sum(self.acrescimos.values())
+
+        if self.decrescimos is not None:
+            self.valor_total -= sum(self.decrescimos.values())
+
+    @property
+    def id(self):
+        return self._id
+
+    def adicionar_acrescimo(self, descricao, valor):
+        self.acrescimos[descricao] = valor
+
+    def adicionar_decrescimo(self, descricao, valor):
+        self.decrescimos[descricao] = valor
 
 
-class Atividade:
-    def __init__(self):
-        self.data_final = None
-        self.data_inicial = datetime.now()
-        self.total_horas = 0
+class Atividade(Serializable):
+    def __init__(self, data_final=None, data_inicial=datetime.now(), total_horas=0):
+        super().__init__()
+        self.data_final = data_final
+        self.data_inicial = data_inicial
+        self.total_horas = total_horas
 
     def finalizar(self):
         self.data_final = datetime.now()
         self.total_horas = (self.data_final - self.data_inicial).total_seconds() / 3600
 
 
-class StatusFolha(Enum):
+class StatusFolha(IntEnum):
     NOVA = 0
     ATIVIDADE_ATIVA = 1
     ATIVIDADE_FINALIZADA = 2
