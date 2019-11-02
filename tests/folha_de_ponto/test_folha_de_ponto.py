@@ -67,7 +67,7 @@ class TestFolhaDePonto(unittest.TestCase):
         self.assertEqual(round(folha.total_horas, 2), 7.33)
         self.assertEqual(round(folha.valor_total, 2), 51.33)
 
-    def test_deve_calcular_total_de_horas_e_valor_total_com_acrescimos(self):
+    def test_deve_calcular_total_de_horas_e_valor_total_com_acrescimos_do_usuario(self):
 
         acrescimos = {"transporte ida": 4.20, "trasnporte volta": 4.20}
 
@@ -85,4 +85,71 @@ class TestFolhaDePonto(unittest.TestCase):
 
         self.assertEqual(round(folha.total_horas, 2), 27.33)
         self.assertEqual(round(folha.valor_total, 2), 208.13)
+        self.assertEqual(folha.status, StatusFolha.FECHADA)
+
+    def test_deve_adicionar_acrescimo_na_folha_de_ponto(self):
+        acrescimo = {"ida": 4.20, "volta": 4.20}
+
+        folha = criar_folha()
+
+        folha.adicionar_acrescimo("ida", acrescimo["ida"])
+        folha.adicionar_acrescimo("volta", acrescimo["volta"])
+
+        self.assertEqual(folha.acrescimos, acrescimo)
+
+    def test_deve_adicionar_decrescimo_na_folha_de_ponto(self):
+        decrescimo = {"ida": 4.20, "volta": 4.20}
+
+        folha = criar_folha()
+
+        folha.adicionar_decrescimo("ida", decrescimo["ida"])
+        folha.adicionar_decrescimo("volta", decrescimo["volta"])
+
+        self.assertEqual(folha.decrescimos, decrescimo)
+
+    def test_deve_calcular_total_de_horas_e_valor_total_com_acrescimos_da_folha(self):
+
+        acrescimos = {"ida": 4.20, "volta": 4.20}
+
+        folha = criar_folha(acrescimos)
+
+        folha.adicionar_acrescimo("ida", acrescimos["ida"])
+        folha.adicionar_acrescimo("volta", acrescimos["volta"])
+
+        atividade = folha.iniciar_atividade()
+        atividade.data_inicial = datetime.now() - timedelta(hours=24)
+        folha.finalizar_atividade()
+
+        atividade = folha.iniciar_atividade()
+        atividade.data_inicial = datetime.now() - timedelta(hours=3, minutes=20)
+        folha.finalizar_atividade()
+
+        folha.fechar()
+
+        self.assertEqual(round(folha.total_horas, 2), 27.33)
+        self.assertEqual(round(folha.valor_total, 2), 216.53)
+        self.assertEqual(folha.status, StatusFolha.FECHADA)
+
+    def test_deve_calcular_total_de_horas_e_valor_total_com_decrescimos_da_folha(self):
+
+        acrescimos = {"ida": 4.20, "volta": 4.20}
+        decrescimos = {"ida": 4.20, "volta": 4.20}
+
+        folha = criar_folha(acrescimos)
+
+        folha.adicionar_decrescimo("ida", decrescimos["ida"])
+        folha.adicionar_decrescimo("volta", decrescimos["volta"])
+
+        atividade = folha.iniciar_atividade()
+        atividade.data_inicial = datetime.now() - timedelta(hours=24)
+        folha.finalizar_atividade()
+
+        atividade = folha.iniciar_atividade()
+        atividade.data_inicial = datetime.now() - timedelta(hours=3, minutes=20)
+        folha.finalizar_atividade()
+
+        folha.fechar()
+
+        self.assertEqual(round(folha.total_horas, 2), 27.33)
+        self.assertEqual(round(folha.valor_total, 2), 199.73)
         self.assertEqual(folha.status, StatusFolha.FECHADA)
