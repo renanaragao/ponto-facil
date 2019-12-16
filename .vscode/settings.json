@@ -1,6 +1,7 @@
 {
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
+    "python.jediEnabled": true,
     "python.envFile": "${workspaceRoot}/app.env",
     "python.pythonPath": "/home/renan.aragao/.local/share/virtualenvs/ponto-facil-sS97HyyI/bin/python",
     "cSpell.words": [
