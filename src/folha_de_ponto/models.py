@@ -7,6 +7,11 @@ from bson import ObjectId
 from src.base.base_model import Serializable
 
 
+def calcular_total_acrescimos(acrescimos):
+    if acrescimos is not None:
+        return sum(acrescimos.values())
+    return 0
+
 class Usuario(Serializable):
     def __init__(self, email: str, valor_hora: float, acrescimos: dict):
         super().__init__()
@@ -16,8 +21,12 @@ class Usuario(Serializable):
         self.acrescimos = acrescimos
         self.total_acrescimos = 0
 
-        if acrescimos is not None:
-            self.total_acrescimos = sum(self.acrescimos.values())
+        self.total_acrescimos = calcular_total_acrescimos(self.acrescimos)
+
+    def adicionar_acrescimo(self, descricao, valor):
+        self.acrescimos = self.acrescimos or {}
+        self.acrescimos[descricao] = valor
+        self.total_acrescimos = calcular_total_acrescimos(self.acrescimos)
 
 
 def retornar_datas(atividades):
@@ -28,7 +37,7 @@ def retornar_datas(atividades):
 
 def calcular_total_dias(atividades):
     datas = list(retornar_datas(atividades))
-    group_by_date = lambda date: datetime(date.year, date.month, date.day)
+    def group_by_date(date): return datetime(date.year, date.month, date.day)
     group = groupby(sorted(datas, key=group_by_date), key=group_by_date)
     return len(list(group))
 
@@ -57,7 +66,8 @@ class FolhaDePonto(Serializable):
 
     def iniciar_atividade(self):
         if self.status is StatusFolha.ATIVIDADE_ATIVA:
-            raise FolhaDePontoError("Existe uma atividade que não foi finalizada.")
+            raise FolhaDePontoError(
+                "Existe uma atividade que não foi finalizada.")
 
         atividade = Atividade()
         self.atividades.append(atividade)
@@ -116,7 +126,8 @@ class Atividade(Serializable):
 
     def finalizar(self):
         self.data_final = datetime.now()
-        self.total_horas = (self.data_final - self.data_inicial).total_seconds() / 3600
+        self.total_horas = (
+            self.data_final - self.data_inicial).total_seconds() / 3600
 
 
 class StatusFolha(IntEnum):

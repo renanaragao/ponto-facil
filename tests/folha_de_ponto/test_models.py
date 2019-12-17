@@ -160,8 +160,14 @@ class TestFolhaDePonto(unittest.TestCase):
 
 class TestUsuario(unittest.TestCase):
     def test_deve_adicionar_acrescimos(self):
+        acrescimo = {"B": 2}
+
         usuario = Usuario("user", 7.0, None)
 
         self.assertIsNone(usuario.acrescimos)
 
-        # usuario.adicionar_acrescimo()
+        usuario.adicionar_acrescimo('B', acrescimo['B'])
+        usuario.adicionar_acrescimo('C', 8)
+
+        self.assertEqual(usuario.acrescimos, {'B': 2, 'C': 8})
+        self.assertEqual(usuario.total_acrescimos, 10)
